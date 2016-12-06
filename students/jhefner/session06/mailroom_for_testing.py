@@ -1,8 +1,6 @@
 #!/Users/jhefner/python_dev/uw_python/bin/python
 verbose = False
 
-
-
 history = {
 "Zapp Brannigan": [50, 73, 10],
 "Philip J Fry": [5],
@@ -12,10 +10,16 @@ history = {
 "Amy Wong": [8, 27, 34],
 }
 
+def check_if_donor(thank_you_name):
+    if thank_you_name in history:
+        return True
+    else:
+        history[thank_you_name]=[]
+        return False
+
 def send_thank_you():
     if verbose: print("send_thank_you()")
-    end = False
-    while not end:
+    while True:
         print("--------------------------")
         print("--------------------------")
         print("--------------------------")
@@ -26,13 +30,10 @@ def send_thank_you():
         if thank_you_name == "list":
             print("Here's the list of our donors:")
             for i in history: print("> ",i)
+            thank_you_name = input("\n>>> ")
 
-        if thank_you_name in history:
-            if verbose: print("NAME IS IN LIST")
-        else:
-            history[thank_you_name]=[]
+        check_if_donor(thank_you_name)
 
-        donation_input = ''
         print("And what was their donation amount?")
         donation_input = input("\n>>> ")
         while not donation_input.isnumeric():
@@ -41,11 +42,10 @@ def send_thank_you():
         donation_input = int(donation_input)
         history[thank_you_name]=[int(donation_input)]
         print("\n\nDear "+thank_you_name+",\nIt is with great thanks that we send this note in reception of your donation. Please accept our gratitude and think of us again in the future.\nSincerely,\n\tUs\n\n")
-        end=True
+        break
+    return True
 
-
-
-def create_a_report():
+def create_a_report(history):
     if verbose: print("create_a_report()")
     report_rows = []
     for key, value in history.items():
@@ -59,11 +59,11 @@ def create_a_report():
     print("-"*66)
     for row in report_rows:
         print("{:25s}   {:11.2f}   {:9d}   {:12.2f}".format(*row))
+    return True
 
 def main():
     if verbose: print("main()")
-    end = False
-    while not end:
+    while True:
         main_menu_choice=0
         print("--------------------------")
         print("What would you like to do?")
@@ -74,9 +74,9 @@ def main():
         if main_menu_choice == "1":
             send_thank_you()
         elif main_menu_choice == "2":
-            create_a_report()
+            create_a_report(history)
         elif main_menu_choice == "3":
-            end=True
+            break
         else:
             print("\n\n\nPlease try your selection again.")
 

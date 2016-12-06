@@ -1,14 +1,5 @@
 #!/Users/jhefner/python_dev/uw_python/bin/python
 
-
-
-
-
-
-
-
-
-
 def main():
     # List comprehensions
     feast = ['lambs', 'sloths', 'orangutans', 'breakfast cereals', 'fruit bats']
