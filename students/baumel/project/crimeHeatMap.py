@@ -15,76 +15,92 @@ within seattle"""
 # geopy
 # you can do this using pip install
 
+
 import numpy as np
 import pandas as pd
-#import datetime
-#import urllib
 import gmplot
-#import socket
-#from bokeh.plotting import *
-#from bokeh.models import HoverTool
-#from collections import OrderedDict
 import requests
 import webbrowser
 import os
 from geopy.geocoders import Nominatim
 
-geolocator = Nominatim()
-go = True
-print("This app will generate a crime heat map based on your location")
 
-while go:
-	intro = input("Would you like to enter a location(y/n): ")
-	if intro.lower() == "y":
-		go = False
-	elif intro.lower() == "n":
-		go = False
-if intro.lower() == "y":
-	location = input("Please enter an address or location in Seattle: ")
-	geo = geolocator.geocode(location)
-	
-	while "seattle" not in geo.address.lower():
-		location = input("Please enter an address or location in Seattle: ")
-		geo = geolocator.geocode(location)
-	longitude = geo.longitude
-	latitude = geo.latitude
-	address = geo.address
-if intro.lower() == "n":
+def manualLocation(geolocator):
+	userInput = input("Please enter an address or location in Seattle: ")
+	location = geolocator.geocode(userInput)
+	while "seattle" not in location.address.lower():
+		userInput = input("Please enter an address or location in Seattle: ")
+		location = geolocator.geocode(userInput)
+
+	results(location.longitude, location.latitude, location.address)
+
+def ipLocation(geolocator):
 	print ("Estimating location based on IP address")
+	# This call makes a request to a website that will
+	# give a rough estimate of your location based on your public IP adress
 	r = requests.get("http://freegeoip.net/json/")
 	data = r.json()
 	latlong = str(data["latitude"])+","+str(data["longitude"])
 	
-	# 44.9778, -93.2650 hard coded non seattle location to test
+	#44.9778, -93.2650 hard coded non seattle location to test
 	#location = geolocator.reverse("44.9778, -93.2650") 
 	location = geolocator.reverse(latlong)
+
+	if "seattle" not in location.address.lower():
+		print("You are not located in Seattle")
+		manualLocation(geolocator)
 	
-	while "seattle" not in location.address.lower():
-		print("You are not currently located in Seattle, please enter a location manually")
-		geo = input("Please enter an address or location in Seattle: ")
-		location = geolocator.geocode(geo)
-	longitude = location.longitude
-	latitude = location.latitude
-	address = location.address
+	else:
+		results(location.longitude, location.latitude, location.address)
 
-radius = float(eval(input("what radius would you like in miles: "))*1609)
+def results(longitude, latitude, address):
+	print()
+	radius = float(eval(input("What radius would you like in miles? "))*1609)
+	limit = int(eval(input("How many results would you like? (1000 - 50,000) ")))
+	goodLimit = False
+	
+	while (not goodLimit):
+		if amount >= 1000 and amount <= 50000:
+			goodLimit = True
+		else:
+			limit = int(eval(input("How many results would you like? (1000 - 50,000) ")))
+	
+	query = ("https://data.seattle.gov/resource/pu5n-trf4.json?$limit={}&$where=within_circle(incident_location,{},{},{})".format(limit,latitude,longitude,radius))
 
+	raw_data = pd.read_json(query)
 
+	# taking the parsed JSon and alligning it with the map
+	gmap = gmplot.GoogleMapPlotter(latitude, longitude, 13)
+	gmap.heatmap(raw_data["latitude"], raw_data["longitude"], radius = 30)
+	gmap.draw("mymap.html")
 
-query = ("https://data.seattle.gov/resource/pu5n-trf4.json?$limit=5000&$where=within_circle(incident_location,{},{},{})".format(latitude,longitude,radius))
-raw_data = pd.read_json(query)
+	# opens up the html file in your default browser
+	url = "mymap.html"
+	webbrowser.open('file://' + os.path.realpath(url))
+	
+	# gives you the text data for the selected area limited to 5000 results
+	counts = raw_data['event_clearance_group'].value_counts()
+	print()
+	print('Crime events by count in your area')
+	print(address)
+	print()
+	print(counts)
 
-# taking the parsed JSon and alligning it with the map
-gmap = gmplot.GoogleMapPlotter(latitude, longitude, 13)
-gmap.heatmap(raw_data["latitude"], raw_data["longitude"],radius = 20)
-gmap.draw("mymap.html")
+def main():
+	geolocator = Nominatim()
+	go = True
 
-# opens up the html file in your default browser
-url = "mymap.html"
-webbrowser.open('file://' + os.path.realpath(url))
-counts = raw_data['event_clearance_group'].value_counts()
-print('Crime events by count in your area')
-print(address)
-print()
-print(counts)
+	print("This app will generate a crime heat map based on your location")
 
+	while go:
+		intro = input("Would you like to enter a location(y/n): ")
+		if intro.lower() == "y":
+			go = False
+			manualLocation(geolocator)
+		elif intro.lower() == "n":
+			go = False
+			ipLocation(geolocator)
+		
+
+if __name__ == '__main__':
+   main()
