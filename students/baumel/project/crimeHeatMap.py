@@ -37,6 +37,7 @@ def ipLocation(geolocator):
 	print ("Estimating location based on IP address")
 	# This call makes a request to a website that will
 	# give a rough estimate of your location based on your public IP adress
+	# This API occasionally times out, if so you just need to run the program again or manually enter address
 	r = requests.get("http://freegeoip.net/json/")
 	data = r.json()
 	latlong = str(data["latitude"])+","+str(data["longitude"])
@@ -45,6 +46,7 @@ def ipLocation(geolocator):
 	#location = geolocator.reverse("44.9778, -93.2650") 
 	
 	location = geolocator.reverse(latlong)
+	
 	return location
 
 def radiusAndLimit():
@@ -98,6 +100,7 @@ def validLocation(geolocator, inputOption):
 	address = geolocator.geocode(location).address
 	radius, limit = radiusAndLimit()
 
+	#Returns a dictionary of location items that will be used throughout the program
 	return {'location': location, 
 			'radius': radius, 
 			'limit':limit, 
@@ -114,7 +117,6 @@ def apiResults(locationInfo):
 				locationInfo['latitude'],
 				locationInfo['longitude'],
 				locationInfo['radius']))
-
 	return pd.read_json(query)
 	
 def mapMaker(raw_data, locationInfo):
